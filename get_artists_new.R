@@ -3,8 +3,8 @@ get_artists <- function(artists, exact = T) {
   ################################################################################
   # shame- and mindlessly copied from RCharlie.com
   # also this is necessary for this call now, it seems
-  client_id     <- "cbeffa315bf740bdac9bab341799d286"
-  client_secret <- "fd8debfa6c4d49599b34984f747e2dcd" # except these ofc
+  client_id     <- "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  client_secret <- "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy" # except these ofc
   access_token  <- POST("https://accounts.spotify.com/api/token",
                         accept_json(), authenticate(client_id, client_secret),
                         body   = list(grant_type="client_credentials"),

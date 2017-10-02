@@ -1,6 +1,8 @@
+### spotify
 # die kann ich einfach bei meiner App nachschauen
 client_id     <- "xxxxxxxxxxxxxxxxxxxxxxxxx"
-client_secret <- "yyyyyyyyyyyyyyyyyyyyyyyyy"
+client_secret <- "yyyyyyyyyyyyyyyyyyyyyyyyy" # dran denken, neues token zu basteln!
+
 
 # damit bekomm ich offenbar ein cooles oAuth-Token, das ich ganz viel weiter verwenden kann
 # das ganze ist stumpf geklaut von https://github.com/tiagomendesdantas/Rspotify
