@@ -6,3 +6,6 @@ _alt/
 assets/
 data/
 fun.Rmd
+.httr-oauth
+credentials.txt
+top_artists_top_tracks.R
