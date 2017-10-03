@@ -20,6 +20,8 @@ genius_get_artists <- function(artist_name, n_results = 10) {
 
 
 # own code
+## sends as many seqrch queries as there are rows in data - which kinda sucks
+## returns a list of lists; one per query
 get_genius_list <- function(data, n_results = 1) {
   baseURL <- 'https://api.genius.com/search?q='
 
@@ -36,7 +38,11 @@ get_genius_list <- function(data, n_results = 1) {
   return(res)
 }
 
+## take my top 50 songs from the last 6 months
+li <- get_genius_list(top50l)
 
+## create a dataframe from that list with uids and names and stuff
+## ...an ideal place to start merging process, I guess?
 listen <- map_df(seq_along(li), function(x){
   if (length(li[[x]]) == 0) {
     data.frame(
@@ -52,7 +58,7 @@ listen <- map_df(seq_along(li), function(x){
       artist_id = tmp$primary_artist$id,
       track_id  = tmp$id
     ) %>%
-      filter(str_to_upper(Title) %in% str_to_upper(top50m$Track))
+      filter(str_to_upper(Title) %in% str_to_upper(top50l$Track))
     # idea: 1. drop NAs and 2. return message(), which Song could be fetched
     # 1. is necessary even
     # also: drop all entries that do not match with Track in data (eg top50m)
@@ -63,23 +69,30 @@ listen <- map_df(seq_along(li), function(x){
 listen <- filter(listen, !is.na(track_id))
 
 ## test to get a song /o\
+## turns out: here's better starting for mergerallala
 song_url <- GET("https://api.genius.com/songs/881774",
                 query = list(access_token = access_token)) %>%
   content %>%
   .[[2]] %>%
-  .$song %>%
-  .$url
+  .$song # from here on I can comfortably dig through all the data
+  # I need: $id, $title, $url, $primary_artist$name -> done
+  # possibly interesting: $media[x]$provider_id
+
 
 ## get ALL the songs
-song_urls <- map_chr(seq_along(listen$track_id), function(x){
-  url <- GET(paste0("https://api.genius.com/songs/", listen$track_id[x]),
+lyrics <- map_df(seq_along(listen$track_id), function(x){
+  tmp <- GET(paste0("https://api.genius.com/songs/", listen$track_id[x]),
                     query = list(access_token = access_token)) %>%
     content %>%
     .[[2]] %>%
-    .$song %>%
-    .$url
+    .$song
 
-  return(url)
+  data.frame(
+    Artist = tmp$primary_artist$name,
+    Track  = tmp$title,
+    gen_id = tmp$id,
+    url    = tmp$url
+  )
 })
 
 # song[[2]]$song$url - enthält die url
@@ -87,15 +100,12 @@ song_urls <- map_chr(seq_along(listen$track_id), function(x){
 lyric_scraper <- function(url) {
   read_html(url) %>%
     html_node("p") %>%
-    html_text
+    html_text() %>%
+    str_replace_all("\\n", " ") %>%
+    str_replace_all("\\[[^\\]]*\\]", "") %>%
+    str_to_lower() %>%
+    str_trim()
 }
-
-lyrix <- map_chr(song_urls, lyric_scraper) %>%
-  str_replace_all("\\n", " ") %>%
-  str_replace_all("\\[[^\\]]*\\]", "") %>%
-  str_to_lower() %>%
-  str_trim()
-
 
 # comb the lyrics
 # str_replace_all(lyrix[10:13], "\\[Verse [0-9]]", "") %>%
@@ -107,3 +117,15 @@ lyrix <- map_chr(song_urls, lyric_scraper) %>%
 
 # should remove all text between square brackets
 # str_replace_all(lyrix[1:3], "", "...")
+
+
+# this gives nice, clean lyrics to work with
+lyrics$lyrics <- map_chr(lyrics$url, lyric_scraper) %>%
+  str_replace_all("\\n", " ") %>%
+  str_replace_all("\\[[^\\]]*\\]", "") %>%
+  str_to_lower() %>%
+  str_trim()
+
+
+## clean up afterwards
+rm(li, listen)
