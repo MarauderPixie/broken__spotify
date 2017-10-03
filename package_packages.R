@@ -3,6 +3,7 @@ library(tidyverse)
 library(httr)
 library(stringr)
 library(lubridate)
+library(rvest)
 
 # visuals
 source("https://tobi.tadaa-data.de/theme_tut.R")
