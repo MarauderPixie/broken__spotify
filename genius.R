@@ -1,4 +1,4 @@
-access_token <- "no_not_again"
+access_token <- "nooo"
 
 # sample code from RCharlie, sorta
 genius_get_artists <- function(artist_name, n_results = 10) {
@@ -51,10 +51,14 @@ listen <- map_df(seq_along(li), function(x){
       Title  = tmp$title,
       artist_id = tmp$primary_artist$id,
       track_id  = tmp$id
-    )
+    ) %>%
+      filter(str_to_upper(Title) %in% str_to_upper(top50m$Track))
     # idea: 1. drop NAs and 2. return message(), which Song could be fetched
+    # 1. is necessary even
+    # also: drop all entries that do not match with Track in data (eg top50m)
+    # str_to_upper(listen$Title) %in% str_to_upper(top50m$Track)
   }
-})
+}) %>% filter(!is.na(Title))
 
 listen <- filter(listen, !is.na(track_id))
 
@@ -66,6 +70,7 @@ song_url <- GET("https://api.genius.com/songs/881774",
   .$song %>%
   .$url
 
+## get ALL the songs
 song_urls <- map_chr(seq_along(listen$track_id), function(x){
   url <- GET(paste0("https://api.genius.com/songs/", listen$track_id[x]),
                     query = list(access_token = access_token)) %>%
@@ -85,6 +90,20 @@ lyric_scraper <- function(url) {
     html_text
 }
 
-lyrix <- map_chr(song_urls[48], lyric_scraper) %>% str_replace_all("\\n", " ")
+lyrix <- map_chr(song_urls, lyric_scraper) %>%
+  str_replace_all("\\n", " ") %>%
+  str_replace_all("\\[[^\\]]*\\]", "") %>%
+  str_to_lower() %>%
+  str_trim()
 
-# stahp.
+
+# comb the lyrics
+# str_replace_all(lyrix[10:13], "\\[Verse [0-9]]", "") %>%
+#   str_replace_all("\\[Pre-Chorus]", "") %>%
+#   str_replace_all("\\[Chorus x[0-9]]", "") %>%
+#   str_replace_all("\\[Chorus]", "") %>%
+#   str_replace_all("\\[Outro]", "") %>%
+#   str_to_lower()
+
+# should remove all text between square brackets
+# str_replace_all(lyrix[1:3], "", "...")
